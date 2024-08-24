@@ -1,3 +1,5 @@
 creds.json
 *.terraform
 *.tfstate
+*.terraform.*
+*.tfstate.*
