@@ -31,3 +31,39 @@ resource "google_compute_firewall" "my_firewall" {
     }
     source_ranges = ["0.0.0.0/0"]
 }
+
+# Create compute instances
+resource "google_compute_instance" "my_instance" {
+    for_each = var.instances
+    name = each.key
+    machine_type = each.value.type
+    zone = each.value.zone
+    tags = [each.key]
+    network_interface {
+        network = google_compute_network.my_vpc.name
+        subnetwork = google_compute_subnetwork.my-subnet1.name
+        stack_type = "IPV4_ONLY"
+        access_config {
+            network_tier = "PREMIUM"
+        }
+    }
+    boot_disk {
+        auto_delete = true
+        mode = "READ_WRITE"
+        initialize_params {
+            size = 10
+            type = "pd-ssd"
+            image = data.google_compute_image.my_image.self_link
+            # image = "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240808"
+            labels = {
+                name = each.key
+            }
+        }
+    }
+}
+
+# Data block to get the image
+data "google_compute_image" "my_image" {
+    family = "ubuntu-2004-lts"
+    project = "ubuntu-os-cloud"
+}
