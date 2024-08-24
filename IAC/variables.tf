@@ -14,3 +14,6 @@ variable "subnet1_cidr" {
     default = "10.10.0.0/16"
 }
 
+variable "ports" {
+    default = ["80", "8080", "8081", "9000"]
+}

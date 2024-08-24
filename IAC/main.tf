@@ -12,3 +12,22 @@ resource "google_compute_subnetwork" "my-subnet1" {
     region = var.region
     ip_cidr_range = var.subnet1_cidr
 }
+
+# Create firewall to allow Traffic
+resource "google_compute_firewall" "my_firewall" {
+    network = google_compute_network.my_vpc.name
+    name = "${var.vpc_name}-firewall"
+    description = "Allow the traffic from respective ports"
+    # allow {
+    #     protocol = "tcp"
+    #     ports = ["8080", "80", "8081", "9000"]
+    # }
+    dynamic "allow" {
+        for_each = var.ports
+        content {
+            protocol = "tcp"
+            ports = [allow.value]
+        }
+    }
+    source_ranges = ["0.0.0.0/0"]
+}
