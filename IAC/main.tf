@@ -32,6 +32,7 @@ resource "google_compute_firewall" "tf_firewall1" {
     source_ranges = ["0.0.0.0/0"]
 }
 
+<<<<<<< HEAD
 ## Create a Key-Pair
 resource "tls_private_key" "tf_keypair" {
     algorithm = "RSA"
@@ -67,11 +68,37 @@ resource "google_compute_instance" "tf_instance" {
             type = "pd-balanced"
             # image = "projects/${var.projectid}/global/images/ubuntu-2004-focal-v20240830"
             image = data.google_compute_image.tf_image.self_link
+=======
+# Create compute instances
+resource "google_compute_instance" "my_instance" {
+    for_each = var.instances
+    name = each.key
+    machine_type = each.value.type
+    zone = each.value.zone
+    tags = [each.key]
+    network_interface {
+        network = google_compute_network.my_vpc.name
+        subnetwork = google_compute_subnetwork.my-subnet1.name
+        stack_type = "IPV4_ONLY"
+        access_config {
+            network_tier = "PREMIUM"
+        }
+    }
+    boot_disk {
+        auto_delete = true
+        mode = "READ_WRITE"
+        initialize_params {
+            size = 10
+            type = "pd-ssd"
+            image = data.google_compute_image.my_image.self_link
+            # image = "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240808"
+>>>>>>> a075e5040b0ba4a6d88e5d32a088c14408d97651
             labels = {
                 name = each.key
             }
         }
     }
+<<<<<<< HEAD
     network_interface {
         network = google_compute_network.tf_vpc.name
         subnetwork = google_compute_subnetwork.tf_subnet1.name
@@ -110,6 +137,12 @@ resource "google_compute_instance" "tf_instance" {
 
 ## compute image
 data "google_compute_image" "tf_image" {
+=======
+}
+
+# Data block to get the image
+data "google_compute_image" "my_image" {
+>>>>>>> a075e5040b0ba4a6d88e5d32a088c14408d97651
     family = "ubuntu-2004-lts"
     project = "ubuntu-os-cloud"
 }
