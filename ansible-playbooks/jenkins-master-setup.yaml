@@ -1,0 +1,37 @@
+---
+- name: Install Jenkins on virtual instance
+  hosts: jenkins-master
+  become: true
+  tasks:
+  - name: Add Jenkins key
+    ansible.builtin.apt_key::
+      url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+      state: present
+  - name: Add Jenkins repository
+    ansible.builtin.apt_repository:
+      repo: "deb https://pkg.jenkins.io/debian-stable binary/"
+      state: present
+  - name: Install Java
+    ansible.builtin.apt:
+      name: openjdk-11-jre
+      state: present
+      update_cache: yes
+      cache_valid_time: 3600
+  - name: Install Jenkins
+    ansible.builtin.apt:
+      name: jenkins
+      state: present
+  - name: Start Jenkins service
+    ansible.builtin.service:
+      name: jenkins
+      state: started
+  - name: Enable Jenkins service
+    ansible.builtin.service:
+      name: jenkins
+      enabled: true
+  - name: cat initialAdminPassword
+    ansible.builtin.shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: admin_password
+  - name: debug the variable
+    ansible.builtin.debug:
+      var: admin_password.stdout_lines

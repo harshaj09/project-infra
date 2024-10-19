@@ -1,5 +1,6 @@
+## google provider
 provider "google" {
-    project = var.my_project
+    project = var.projectid
     region = var.region
     credentials = file("creds.json")
 }
