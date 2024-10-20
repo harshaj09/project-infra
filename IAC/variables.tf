@@ -32,6 +32,10 @@ variable "instances" {
             machine = "e2-medium"
             zone = "us-central1-c"
         }
+        sonarqube = {
+            machine = "e2-medium"
+            zone = "us-west1-c"
+        }
     }
 }
 
