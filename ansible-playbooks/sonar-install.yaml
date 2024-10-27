@@ -1,0 +1,104 @@
+# Sonar Installation Process
+- name: Sonar Installation
+  hosts: sonarqube
+  become: true
+  tasks:
+  - name: add sonar user
+    ansible.builtin.user:
+      name: "{{ item.usr }}"
+      create_home: yes
+      state: present
+    with_items:
+      - { usr: 'sonar', message: 'sonar_user_created' }
+  - name: add sonar user to sudoers file
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers
+      state: present
+      regexp: '^%wheel ALL='
+      line: 'sonar  ALL=(ALL)   NOPASSWD: ALL'
+      validate: /usr/sbin/visudo -cf %s
+  - name: install jdk-17.0.2
+    ansible.builtin.unarchive:
+      src: https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz
+      dest: /opt/
+      copy: no
+  - name: install apache-maven-3.8.8
+    ansible.builtin.unarchive:
+      src: https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+      dest: /opt/
+      copy: no
+  - name: install unzip package
+    ansible.builtin.apt:
+      name: unzip
+      state: present
+  - name: download sonarqube
+    ansible.builtin.unarchive:
+      src: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.7.96285.zip
+      dest: /opt/
+      copy: no
+  - name: move directories from src to dest for jdk
+    ansible.builtin.command: mv /opt/openjdk-17.0.2 /opt/jdk17
+    args:
+      removes: /opt/openjdk-17.0.2
+      creates: /opt/jdk17
+  - name: move directories from src to dest for maven
+    ansible.builtin.command: mv /opt/apache-maven-3.8.8 /opt/maven388
+    args:
+      removes: /opt/apache-maven-3.8.8
+      creates: /opt/maven388
+  - name: move directories from src to dest for sonarqube
+    ansible.builtin.command: mv /opt/sonarqube-9.9.7.96285 /opt/sonarqube997
+    args: 
+      removes: /opt/sonarqube-9.9.7.96285
+      creates: /opt/sonarqube997
+  - name: export the varibles
+    ansible.builtin.blockinfile:
+      path: /etc/profile
+      state: present
+      block: |
+        {{ item.env }}
+      marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.env }}"
+    loop:
+      - { env: 'JAVA_HOME=/opt/jdk17' }
+      - { env: 'PATH=$PATH:$JAVA_HOME/bin' }
+      - { env: 'MAVEN_HOME=/opt/maven388' }
+      - { env: 'PATH=$PATH:$MAVEN_HOME/bin' }
+      - { env: 'SONAR_JAVA_PATH=/opt/jdk17' }
+      - { env: 'PATH=$PATH:$SONAR_JAVA_PATH/bin' }
+  - name: change ownership and permissions of sonar folder
+    ansible.builtin.file:
+      path: '{{ item.perm }}'
+      state: directory
+      mode: 0775
+      recurse: yes
+      owner: sonar
+      group: sonar
+    with_items:
+      - { perm: '/opt/sonarqube997', message: 'ownership_permissions updated' }
+  # - name: configure sonarqube to run as sonar user
+  #   ansible.builtin.lineinfile:
+  #     path: /opt/sonarqube997/bin/linux-x86-64/sonar.sh
+  #     regexp: 'RUN_AS_USER=sonar'
+  #     insertafter: '#RUN_AS_USER='
+  #     line: 'RUN_AS_USER=sonar'
+  - name: copy strtup script to remote server
+    ansible.builtin.template:
+      src: sonar.service
+      dest: /etc/systemd/system
+      owner: sonar
+      group: sonar
+      mode: 0755
+---
+- name: start sonar
+  hosts: sonarqube
+  become: yes
+  become_method: su
+  become_user: sonar
+  become_flags: '-s /bin/sh'
+  tasks: 
+  - name: start sonar service
+    ansible.builtin.systemd:
+      name: sonar
+      enabled: yes
+      state: started
+      daemon_reload: true

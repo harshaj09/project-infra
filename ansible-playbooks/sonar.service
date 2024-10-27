@@ -1,0 +1,22 @@
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=sonarqube
+Group=sonarqube
+PermissionsStartOnly=true
+ExecStart=/opt/sonarqube997/bin/linux-x86-64/sonar.sh start
+ExecStop=/opt/sonarqube997/bin/linux-x86-64/sonar.sh stop
+ExecReload=/opt/sonarqube997/bin/linux-x86-64/sonar.sh restart
+PIDFile=/opt/sonarqube997/bin/linux-x86-64/./SonarQube.pid
+StandardOutput=syslog
+LimitNOFILE=131072
+LimitNPROC=8192
+TimeoutStartSec=5
+Restart=always
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

@@ -34,7 +34,7 @@ variable "instances" {
         }
         sonarqube = {
             machine = "e2-medium"
-            zone = "us-west1-c"
+            zone = "us-west1-a"
         }
     }
 }
